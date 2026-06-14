@@ -18,8 +18,14 @@ st.markdown("""
     /* Import Google Font */
     @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
     
-    /* Apply Font Family globally */
-    * {
+    /* Apply Font Family specifically to main content and widgets to preserve system icons */
+    .stApp {
+        font-family: 'Outfit', sans-serif;
+    }
+    .gradient-text, .subtitle-text, .glass-card, .result-card, .result-title, .result-value, div.stButton > button {
+        font-family: 'Outfit', sans-serif !important;
+    }
+    .stWidget label, .stSelectbox div, .stSlider div {
         font-family: 'Outfit', sans-serif !important;
     }
     
