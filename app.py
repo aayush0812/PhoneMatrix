@@ -146,42 +146,40 @@ with st.container():
     
     with col1:
         st.subheader("Memory & Storage")
-        # RAM Select box (Options specified in implementation guide)
+        # RAM Select box (Options: 4, 6, 8, 12, 16)
         ram_val = st.selectbox(
             "RAM Capacity (GB)",
-            options=[2, 4, 6, 8, 12, 16, 24],
-            index=3, # Default: 8 GB
+            options=[4, 6, 8, 12, 16],
+            index=2, # Default: 8 GB
             help="Select the smartphone RAM capacity in Gigabytes."
         )
         
-        # Storage Select box (Options specified in implementation guide)
+        # Storage Select box (Options: 64, 128, 256, 512, 1024)
         storage_val = st.selectbox(
             "Internal Storage (GB)",
-            options=[32, 64, 128, 256, 512, 1024],
-            index=3, # Default: 256 GB
+            options=[64, 128, 256, 512, 1024],
+            index=2, # Default: 256 GB
             help="Select the internal storage capacity in Gigabytes."
         )
         
     with col2:
         st.subheader("Battery & Camera")
-        # Battery Capacity Slider (2000 to 7000 mAh)
+        # Battery Capacity Slider (3000 to 7000 mAh)
         battery_val = st.slider(
             "Battery Capacity (mAh)",
-            min_value=2000,
+            min_value=3000,
             max_value=7000,
             value=5000,
             step=100,
             help="Drag to select the battery capacity in milliampere-hours."
         )
         
-        # Main Camera Slider (8 to 200 MP)
-        camera_val = st.slider(
+        # Main Camera Slider with fixed stops (8, 12, 16, 24, 48, 50, 64, 108, 200 MP)
+        camera_val = st.select_slider(
             "Main Camera Resolution (MP)",
-            min_value=8,
-            max_value=200,
+            options=[8, 12, 16, 24, 48, 50, 64, 108, 200],
             value=50,
-            step=1,
-            help="Drag to select the primary rear camera resolution in Megapixels."
+            help="Select the primary rear camera resolution in Megapixels from standard values."
         )
         
     st.markdown('</div>', unsafe_allow_html=True)
