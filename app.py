@@ -31,19 +31,19 @@ st.markdown("""
     
     /* Background adjustments */
     .stApp {
-        background: linear-gradient(135deg, #0e1117 0%, #161a24 100%);
+        background: linear-gradient(135deg, var(--background-color) 0%, var(--secondary-background-color) 100%);
     }
     
     /* Main Card styling (Glassmorphism) */
     .glass-card {
-        background: rgba(255, 255, 255, 0.03);
+        background: rgba(128, 128, 128, 0.05);
         backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(128, 128, 128, 0.15);
         border-radius: 16px;
         padding: 30px;
         margin-bottom: 25px;
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
     }
     
     /* Gradient title */
@@ -58,7 +58,8 @@ st.markdown("""
     }
     
     .subtitle-text {
-        color: #a0aec0;
+        color: var(--text-color);
+        opacity: 0.75;
         text-align: center;
         font-size: 1.1rem;
         font-weight: 300;
@@ -120,7 +121,7 @@ st.markdown("""
     /* Input Label modifications */
     label {
         font-weight: 600 !important;
-        color: #e2e8f0 !important;
+        color: var(--text-color) !important;
         font-size: 0.95rem !important;
     }
     
@@ -229,7 +230,7 @@ if predict_btn:
 
 # Footer
 st.markdown("""
-<div style="text-align: center; margin-top: 50px; color: #718096; font-size: 0.85rem;">
+<div style="text-align: center; margin-top: 50px; color: var(--text-color); opacity: 0.5; font-size: 0.85rem;">
     PhoneMatrix • End-Semester Machine Learning Evaluation Project
 </div>
 """, unsafe_allow_html=True)
