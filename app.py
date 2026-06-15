@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import joblib
 import os
+import re
 
 # Set page config for a premium and modern look
 st.set_page_config(
@@ -11,6 +12,62 @@ st.set_page_config(
     layout="centered",
     initial_sidebar_state="collapsed"
 )
+
+# Load raw dataset and parse specs for competitor matching (Cached for instant load)
+@st.cache_data
+def load_clean_dataset():
+    if not os.path.exists("device_specs_structured_dataset.csv"):
+        return None
+    try:
+        df = pd.read_csv("device_specs_structured_dataset.csv")
+        
+        # Local regex parser matching train_model.py
+        def parse_spec_local(val_str, default_unit="GB"):
+            if pd.isna(val_str):
+                return None
+            val_str = str(val_str).strip()
+            first_part = re.split(r'[/+]', val_str)[0].strip()
+            match = re.search(r'(\d+(?:\.\d+)?)\s*([a-zA-Z]+)?', first_part)
+            if not match:
+                return None
+            val = float(match.group(1))
+            unit = match.group(2)
+            if unit:
+                unit = unit.upper()
+            else:
+                unit = default_unit.upper()
+            if unit == "MB":
+                return val / 1024.0
+            elif unit == "TB":
+                return val * 1024.0
+            elif unit == "KB":
+                return val / (1024.0 * 1024.0)
+            return val
+
+        # Clean key specs for distance calculations
+        df['ram_gb'] = df['ram_raw'].apply(lambda x: parse_spec_local(x, 'GB'))
+        df['storage_gb'] = df['storage_raw'].apply(lambda x: parse_spec_local(x, 'GB'))
+        df['battery_mah'] = df['battery_raw'].apply(lambda x: parse_spec_local(x, 'mAh'))
+        df['main_camera_mp'] = df['rear_camera_raw'].apply(lambda x: parse_spec_local(x, 'MP'))
+        
+        # Keep rows with valid features and target
+        df = df.dropna(subset=['ram_gb', 'storage_gb', 'battery_mah', 'main_camera_mp', 'price_inr'])
+        return df
+    except Exception as e:
+        return None
+
+# Find top 3 closest competitor matches in dataset
+def get_top_matches(df, ram, storage, battery, camera, top_n=3):
+    df_dist = df.copy()
+    # Euclidean distance normalized by standard feature scale ranges
+    df_dist['dist'] = (
+        ((df_dist['ram_gb'] - ram) / 12.0) ** 2 +
+        ((df_dist['storage_gb'] - storage) / 960.0) ** 2 +
+        ((df_dist['battery_mah'] - battery) / 4000.0) ** 2 +
+        ((df_dist['main_camera_mp'] - camera) / 192.0) ** 2
+    )
+    # Return sorted top records
+    return df_dist.sort_values(by='dist').head(top_n)
 
 # Initialize Session State values for widgets
 if 'ram_gb' not in st.session_state:
@@ -102,6 +159,55 @@ st.markdown("""
         font-size: 3rem;
         font-weight: 800;
         text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* VFM Auditor Box Styling */
+    .vfm-box {
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 15px;
+        font-weight: 600;
+        text-align: center;
+    }
+    .vfm-hot {
+        background: rgba(46, 204, 113, 0.15);
+        border: 1px solid rgba(46, 204, 113, 0.4);
+        color: #2ecc71;
+    }
+    .vfm-fair {
+        background: rgba(52, 152, 219, 0.15);
+        border: 1px solid rgba(52, 152, 219, 0.4);
+        color: #3498db;
+    }
+    .vfm-over {
+        background: rgba(231, 76, 60, 0.15);
+        border: 1px solid rgba(231, 76, 60, 0.4);
+        color: #e74c3c;
+    }
+    
+    /* Competitor Card Styling */
+    .competitor-card {
+        background: rgba(128, 128, 128, 0.05);
+        border: 1px solid rgba(128, 128, 128, 0.1);
+        border-radius: 10px;
+        padding: 12px;
+        margin-bottom: 10px;
+    }
+    .competitor-name {
+        font-weight: 700;
+        color: var(--text-color);
+        font-size: 0.95rem;
+    }
+    .competitor-price {
+        font-weight: 800;
+        color: #00f2fe;
+        font-size: 0.95rem;
+    }
+    .competitor-specs {
+        font-size: 0.78rem;
+        color: var(--text-color);
+        opacity: 0.7;
+        margin-top: 4px;
     }
     
     /* Custom button styling */
@@ -238,6 +344,18 @@ with st.container(border=True):
             key="main_camera_mp",
             help="Select the primary rear camera resolution in Megapixels from standard values."
         )
+        
+    st.markdown('<hr style="border: 0; border-top: 1px solid rgba(128, 128, 128, 0.15); margin: 20px 0;">', unsafe_allow_html=True)
+    
+    # Value for Money Auditor Input
+    st.subheader("🔍 Valuation Auditor (Optional)")
+    store_price = st.number_input(
+        "Compare with Store Price (₹)",
+        min_value=0,
+        value=0,
+        step=1000,
+        help="Optional: Enter a store price to check if the device is a good deal compared to the ML prediction."
+    )
 
 # Centered Predict Button Layout
 st.markdown('<div style="margin-bottom: 15px;"></div>', unsafe_allow_html=True)
@@ -279,10 +397,65 @@ if predict_btn:
             </div>
             """, unsafe_allow_html=True)
             
-            # Market Position Analysis & Tier Badge
-            market_ratio = min(max((predicted_raw - 8000.0) / 212000.0, 0.0), 1.0)
+            # 1. Value for Money (VFM) Auditor Logic
+            if store_price > 0:
+                vfm_ratio = predicted_price / store_price
+                price_diff = abs(predicted_price - store_price)
+                
+                if vfm_ratio >= 1.15:
+                    vfm_class = "vfm-hot"
+                    vfm_text = f"🔥 Hot Deal! (Underpriced by ₹{price_diff:,} compared to spec value)"
+                elif 0.90 <= vfm_ratio < 1.15:
+                    vfm_class = "vfm-fair"
+                    vfm_text = "⚖️ Fair Valuation (Price matches component specifications)"
+                else:
+                    vfm_class = "vfm-over"
+                    vfm_text = f"⚠️ Overpriced! (You are paying a ₹{price_diff:,} markup above component value)"
+                    
+                st.markdown(f"""
+                <div class="vfm-box {vfm_class}">
+                    {vfm_text}
+                </div>
+                """, unsafe_allow_html=True)
             
-            # Determine Tier Label, Icon, and Color
+            # 2. Hardware Performance Ratings Calculations
+            ram_map = {4: 1.5, 6: 2.5, 8: 3.5, 12: 4.5, 16: 5.0}
+            storage_map = {64: 1.5, 128: 2.5, 256: 3.5, 512: 4.5, 1024: 5.0}
+            camera_map = {8: 1.5, 12: 2.0, 16: 2.5, 24: 3.0, 48: 4.0, 50: 4.2, 64: 4.5, 108: 4.8, 200: 5.0}
+            
+            gaming_score = (ram_map[ram_val] + storage_map[storage_val]) / 2.0
+            battery_score = 2.0 + (battery_val - 3000.0) / 4000.0 * 3.0
+            photo_score = camera_map[camera_val]
+            
+            def get_star_rating(score):
+                stars = int(round(score))
+                return "⭐" * stars + "⚫" * (5 - stars)
+                
+            st.markdown('<div style="font-weight: 600; color: var(--text-color); font-size: 1rem; margin-top: 25px; margin-bottom: 10px;">📊 Estimated Hardware Performance</div>', unsafe_allow_html=True)
+            rate_col1, rate_col2, rate_col3 = st.columns(3)
+            with rate_col1:
+                st.markdown(f"""
+                <div style="text-align: center; background: rgba(128, 128, 128, 0.05); padding: 12px; border-radius: 8px; border: 1px solid rgba(128, 128, 128, 0.1);">
+                    <div style="font-size: 0.8rem; opacity: 0.7; color: var(--text-color);">Gaming Power</div>
+                    <div style="font-size: 1.05rem; font-weight: bold; margin-top: 4px; color: var(--text-color);">{get_star_rating(gaming_score)}</div>
+                </div>
+                """, unsafe_allow_html=True)
+            with rate_col2:
+                st.markdown(f"""
+                <div style="text-align: center; background: rgba(128, 128, 128, 0.05); padding: 12px; border-radius: 8px; border: 1px solid rgba(128, 128, 128, 0.1);">
+                    <div style="font-size: 0.8rem; opacity: 0.7; color: var(--text-color);">Battery Life</div>
+                    <div style="font-size: 1.05rem; font-weight: bold; margin-top: 4px; color: var(--text-color);">{get_star_rating(battery_score)}</div>
+                </div>
+                """, unsafe_allow_html=True)
+            with rate_col3:
+                st.markdown(f"""
+                <div style="text-align: center; background: rgba(128, 128, 128, 0.05); padding: 12px; border-radius: 8px; border: 1px solid rgba(128, 128, 128, 0.1);">
+                    <div style="font-size: 0.8rem; opacity: 0.7; color: var(--text-color);">Photography</div>
+                    <div style="font-size: 1.05rem; font-weight: bold; margin-top: 4px; color: var(--text-color);">{get_star_rating(photo_score)}</div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+            # Market Position Analysis & Tier Badge
             if predicted_price < 25000:
                 tier_label = "🟢 Budget Range (Excellent Value)"
                 tier_desc = "Perfect for standard daily tasks, light media, and high battery efficiency."
@@ -308,6 +481,27 @@ if predict_btn:
             # Render Progress Bar
             st.markdown('<div style="text-align: center; color: var(--text-color); margin-top: 25px; font-weight: 600; font-size: 0.85rem; opacity: 0.85;">Market Price Spectrum (₹8,000 - ₹220,000)</div>', unsafe_allow_html=True)
             st.progress(market_ratio)
+            
+            # 3. Similar Competitor Matches
+            df_dataset = load_clean_dataset()
+            if df_dataset is not None:
+                matches = get_top_matches(df_dataset, float(ram_val), float(storage_val), float(battery_val), float(camera_val))
+                
+                st.markdown('<div style="margin-top: 30px; font-weight: 600; color: var(--text-color); font-size: 1rem; margin-bottom: 10px;">🔍 Similar Market Competitors (from Dataset)</div>', unsafe_allow_html=True)
+                
+                for idx, row in matches.iterrows():
+                    spec_summary = f"{int(row['ram_gb'])}GB RAM • {int(row['storage_gb'])}GB Storage • {int(row['battery_mah'])}mAh Battery • {int(row['main_camera_mp'])}MP Camera"
+                    formatted_actual = f"₹{int(row['price_inr']):,}"
+                    
+                    st.markdown(f"""
+                    <div class="competitor-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span class="competitor-name">{row['phone_name']}</span>
+                            <span class="competitor-price">{formatted_actual}</span>
+                        </div>
+                        <div class="competitor-specs">{spec_summary}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
             
             # Also invoke fallback success banner for clarity & guide adherence
             st.success(f"Successfully calculated smartphone price: {formatted_price}")
