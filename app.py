@@ -22,7 +22,7 @@ st.markdown("""
     .stApp {
         font-family: 'Outfit', sans-serif;
     }
-    .gradient-text, .subtitle-text, .glass-card, .result-card, .result-title, .result-value, div.stButton > button {
+    .gradient-text, .subtitle-text, div[data-testid="stBorderContainer"], .result-card, .result-title, .result-value, div.stButton > button {
         font-family: 'Outfit', sans-serif !important;
     }
     .stWidget label, .stSelectbox div, .stSlider div {
@@ -34,16 +34,16 @@ st.markdown("""
         background: linear-gradient(135deg, var(--background-color) 0%, var(--secondary-background-color) 100%);
     }
     
-    /* Main Card styling (Glassmorphism) */
-    .glass-card {
-        background: rgba(128, 128, 128, 0.05);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(128, 128, 128, 0.15);
-        border-radius: 16px;
-        padding: 30px;
-        margin-bottom: 25px;
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+    /* Main Card styling (Glassmorphism applied to native container) */
+    div[data-testid="stBorderContainer"] {
+        background: rgba(128, 128, 128, 0.05) !important;
+        backdrop-filter: blur(10px) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
+        border: 1px solid rgba(128, 128, 128, 0.15) !important;
+        border-radius: 16px !important;
+        padding: 30px !important;
+        margin-bottom: 25px !important;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1) !important;
     }
     
     /* Gradient title */
@@ -138,8 +138,7 @@ st.markdown('<div class="gradient-text">📱 PhoneMatrix</div>', unsafe_allow_ht
 st.markdown('<div class="subtitle-text">A premium machine learning engine to predict estimated smartphone retail prices</div>', unsafe_allow_html=True)
 
 # Main Form Container (Glassmorphic)
-with st.container():
-    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+with st.container(border=True):
     
     # 2-Column layout for input fields
     col1, col2 = st.columns(2)
@@ -181,8 +180,6 @@ with st.container():
             value=50,
             help="Select the primary rear camera resolution in Megapixels from standard values."
         )
-        
-    st.markdown('</div>', unsafe_allow_html=True)
 
 # Trigger Model Prediction
 predict_btn = st.button("Predict Price")
