@@ -174,7 +174,7 @@ with preset_col1:
     if st.button("🟢 Budget Profile"):
         st.session_state['ram_gb'] = 4
         st.session_state['storage_gb'] = 64
-        st.session_state['battery_mah'] = 3500
+        st.session_state['battery_mah'] = 5000
         st.session_state['main_camera_mp'] = 12
         st.rerun()
 
