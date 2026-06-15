@@ -456,6 +456,7 @@ if predict_btn:
                 """, unsafe_allow_html=True)
                 
             # Market Position Analysis & Tier Badge
+            market_ratio = min(max((float(predicted_raw) - 8000.0) / 212000.0, 0.0), 1.0)
             if predicted_price < 25000:
                 tier_label = "🟢 Budget Range (Excellent Value)"
                 tier_desc = "Perfect for standard daily tasks, light media, and high battery efficiency."
