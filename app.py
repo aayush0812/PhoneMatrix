@@ -85,23 +85,19 @@ st.markdown("""
     /* Import Google Font */
     @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
     
-    /* Apply Font Family specifically to main content and widgets to preserve system icons */
-    .stApp {
-        font-family: 'Outfit', sans-serif;
-    }
-    .gradient-text, .subtitle-text, div[data-testid="stBorderContainer"], .result-card, .result-title, .result-value, div.stButton > button {
-        font-family: 'Outfit', sans-serif !important;
-    }
+    /* 1. Global Font Rule (Excludes system icons) */
+    .stApp, .gradient-text, .subtitle-text, div[data-testid="stBorderContainer"], 
+    .result-card, .vfm-box, .competitor-card, div.stButton > button, 
     .stWidget label, .stSelectbox div, .stSlider div {
         font-family: 'Outfit', sans-serif !important;
     }
     
-    /* Background adjustments */
+    /* 2. Theme-Responsive Background */
     .stApp {
         background: linear-gradient(135deg, var(--background-color) 0%, var(--secondary-background-color) 100%);
     }
     
-    /* Main Card styling (Glassmorphism applied to native container) */
+    /* 3. Main Glassmorphic Card Wrapper */
     div[data-testid="stBorderContainer"] {
         background: rgba(128, 128, 128, 0.05) !important;
         backdrop-filter: blur(10px) !important;
@@ -113,7 +109,7 @@ st.markdown("""
         box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1) !important;
     }
     
-    /* Gradient title */
+    /* 4. Typography Elements */
     .gradient-text {
         background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
         -webkit-background-clip: text;
@@ -123,7 +119,6 @@ st.markdown("""
         margin-bottom: 10px;
         text-align: center;
     }
-    
     .subtitle-text {
         color: var(--text-color);
         opacity: 0.75;
@@ -132,8 +127,52 @@ st.markdown("""
         font-weight: 300;
         margin-bottom: 35px;
     }
+    label {
+        font-weight: 600 !important;
+        color: var(--text-color) !important;
+        font-size: 0.95rem !important;
+    }
     
-    /* Prediction success card styling */
+    /* 5. Custom Button Styles (Predict & Preset buttons) */
+    div.stButton > button:first-child {
+        background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%) !important;
+        color: #ffffff !important;
+        font-weight: 600 !important;
+        font-size: 1.1rem !important;
+        border: none !important;
+        border-radius: 8px !important;
+        padding: 12px 30px !important;
+        width: 100% !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4) !important;
+    }
+    div.stButton > button:first-child:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 20px rgba(0, 242, 254, 0.6) !important;
+        background: linear-gradient(90deg, #00f2fe 0%, #4facfe 100%) !important;
+    }
+    div.stButton > button:first-child:active {
+        transform: translateY(1px) !important;
+    }
+    
+    div[data-testid="stHorizontalBlock"] button {
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        font-size: 0.9rem !important;
+        padding: 8px 16px !important;
+        transition: all 0.3s ease !important;
+        background: rgba(128, 128, 128, 0.05) !important;
+        border: 1px solid rgba(128, 128, 128, 0.1) !important;
+        color: var(--text-color) !important;
+        width: 100% !important;
+    }
+    div[data-testid="stHorizontalBlock"] button:hover {
+        background: rgba(128, 128, 128, 0.15) !important;
+        border-color: rgba(128, 128, 128, 0.3) !important;
+        transform: translateY(-1px) !important;
+    }
+    
+    /* 6. Dynamic Output Cards (Result, VFM box, Competitors) */
     .result-card {
         background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
         border: 1px solid rgba(255, 255, 255, 0.1);
@@ -144,7 +183,6 @@ st.markdown("""
         box-shadow: 0 4px 20px 0 rgba(0, 242, 254, 0.15);
         animation: fadeIn 0.8s ease-in-out;
     }
-    
     .result-title {
         color: #e2e8f0;
         font-size: 1rem;
@@ -153,7 +191,6 @@ st.markdown("""
         font-weight: 600;
         margin-bottom: 5px;
     }
-    
     .result-value {
         color: #ffffff;
         font-size: 3rem;
@@ -161,7 +198,6 @@ st.markdown("""
         text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
     }
     
-    /* VFM Auditor Box Styling */
     .vfm-box {
         border-radius: 8px;
         padding: 15px;
@@ -185,7 +221,6 @@ st.markdown("""
         color: #e74c3c;
     }
     
-    /* Competitor Card Styling */
     .competitor-card {
         background: rgba(128, 128, 128, 0.05);
         border: 1px solid rgba(128, 128, 128, 0.1);
@@ -210,57 +245,6 @@ st.markdown("""
         margin-top: 4px;
     }
     
-    /* Custom button styling */
-    div.stButton > button:first-child {
-        background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
-        color: #ffffff;
-        font-weight: 600;
-        font-size: 1.1rem;
-        border: none;
-        border-radius: 8px;
-        padding: 12px 30px;
-        width: 100%;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
-    }
-    
-    div.stButton > button:first-child:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(0, 242, 254, 0.6);
-        background: linear-gradient(90deg, #00f2fe 0%, #4facfe 100%);
-    }
-
-    div.stButton > button:first-child:active {
-        transform: translateY(1px);
-    }
-    
-    /* Custom preset button styling (horizontal column buttons) */
-    div[data-testid="stHorizontalBlock"] button {
-        border-radius: 8px !important;
-        font-weight: 600 !important;
-        font-size: 0.9rem !important;
-        padding: 8px 16px !important;
-        transition: all 0.3s ease !important;
-        background: rgba(128, 128, 128, 0.05) !important;
-        border: 1px solid rgba(128, 128, 128, 0.1) !important;
-        color: var(--text-color) !important;
-        width: 100% !important;
-    }
-    
-    div[data-testid="stHorizontalBlock"] button:hover {
-        background: rgba(128, 128, 128, 0.15) !important;
-        border-color: rgba(128, 128, 128, 0.3) !important;
-        transform: translateY(-1px);
-    }
-    
-    /* Input Label modifications */
-    label {
-        font-weight: 600 !important;
-        color: var(--text-color) !important;
-        font-size: 0.95rem !important;
-    }
-    
-    /* Animation definition */
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
