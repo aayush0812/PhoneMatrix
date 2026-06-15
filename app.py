@@ -12,6 +12,16 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+# Initialize Session State values for widgets
+if 'ram_gb' not in st.session_state:
+    st.session_state['ram_gb'] = 8
+if 'storage_gb' not in st.session_state:
+    st.session_state['storage_gb'] = 256
+if 'battery_mah' not in st.session_state:
+    st.session_state['battery_mah'] = 5000
+if 'main_camera_mp' not in st.session_state:
+    st.session_state['main_camera_mp'] = 50
+
 # Custom CSS for glassmorphism, modern fonts, gradients, and custom styling
 st.markdown("""
 <style>
@@ -118,6 +128,25 @@ st.markdown("""
         transform: translateY(1px);
     }
     
+    /* Custom preset button styling (horizontal column buttons) */
+    div[data-testid="stHorizontalBlock"] button {
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        font-size: 0.9rem !important;
+        padding: 8px 16px !important;
+        transition: all 0.3s ease !important;
+        background: rgba(128, 128, 128, 0.05) !important;
+        border: 1px solid rgba(128, 128, 128, 0.1) !important;
+        color: var(--text-color) !important;
+        width: 100% !important;
+    }
+    
+    div[data-testid="stHorizontalBlock"] button:hover {
+        background: rgba(128, 128, 128, 0.15) !important;
+        border-color: rgba(128, 128, 128, 0.3) !important;
+        transform: translateY(-1px);
+    }
+    
     /* Input Label modifications */
     label {
         font-weight: 600 !important;
@@ -137,6 +166,36 @@ st.markdown("""
 st.markdown('<div class="gradient-text">📱 PhoneMatrix</div>', unsafe_allow_html=True)
 st.markdown('<div class="subtitle-text">A premium machine learning engine to predict estimated smartphone retail prices</div>', unsafe_allow_html=True)
 
+# ⚡ Quick Specification Presets Section
+st.markdown('<div style="text-align: center; color: var(--text-color); font-weight: 600; font-size: 1rem; margin-bottom: 12px; opacity: 0.85;">⚡ Quick Specification Presets</div>', unsafe_allow_html=True)
+preset_col1, preset_col2, preset_col3 = st.columns(3)
+
+with preset_col1:
+    if st.button("🟢 Budget Profile"):
+        st.session_state['ram_gb'] = 4
+        st.session_state['storage_gb'] = 64
+        st.session_state['battery_mah'] = 3500
+        st.session_state['main_camera_mp'] = 12
+        st.rerun()
+
+with preset_col2:
+    if st.button("🟡 Mid-Range Profile"):
+        st.session_state['ram_gb'] = 8
+        st.session_state['storage_gb'] = 128
+        st.session_state['battery_mah'] = 5000
+        st.session_state['main_camera_mp'] = 48
+        st.rerun()
+
+with preset_col3:
+    if st.button("🔴 Flagship Profile"):
+        st.session_state['ram_gb'] = 16
+        st.session_state['storage_gb'] = 512
+        st.session_state['battery_mah'] = 5000
+        st.session_state['main_camera_mp'] = 108
+        st.rerun()
+
+st.markdown('<div style="margin-bottom: 25px;"></div>', unsafe_allow_html=True)
+
 # Main Form Container (Glassmorphic)
 with st.container(border=True):
     
@@ -144,12 +203,12 @@ with st.container(border=True):
     col1, col2 = st.columns(2)
     
     with col1:
-        st.subheader("Memory & Storage")
+        st.subheader("💾 Memory & Storage")
         # RAM Select box (Options: 4, 6, 8, 12, 16)
         ram_val = st.selectbox(
             "RAM Capacity (GB)",
             options=[4, 6, 8, 12, 16],
-            index=2, # Default: 8 GB
+            key="ram_gb",
             help="Select the smartphone RAM capacity in Gigabytes."
         )
         
@@ -157,19 +216,18 @@ with st.container(border=True):
         storage_val = st.selectbox(
             "Internal Storage (GB)",
             options=[64, 128, 256, 512, 1024],
-            index=2, # Default: 256 GB
+            key="storage_gb",
             help="Select the internal storage capacity in Gigabytes."
         )
         
     with col2:
-        st.subheader("Battery & Camera")
+        st.subheader("🔋 Battery & Camera")
         # Battery Capacity Slider (3000 to 7000 mAh)
         battery_val = st.slider(
             "Battery Capacity (mAh)",
             min_value=3000,
             max_value=7000,
-            value=5000,
-            step=100,
+            key="battery_mah",
             help="Drag to select the battery capacity in milliampere-hours."
         )
         
@@ -177,12 +235,16 @@ with st.container(border=True):
         camera_val = st.select_slider(
             "Main Camera Resolution (MP)",
             options=[8, 12, 16, 24, 48, 50, 64, 108, 200],
-            value=50,
+            key="main_camera_mp",
             help="Select the primary rear camera resolution in Megapixels from standard values."
         )
 
-# Trigger Model Prediction
-predict_btn = st.button("Predict Price")
+# Centered Predict Button Layout
+st.markdown('<div style="margin-bottom: 15px;"></div>', unsafe_allow_html=True)
+col_l, col_btn, col_r = st.columns([1.2, 1, 1.2])
+
+with col_btn:
+    predict_btn = st.button("Predict Price")
 
 if predict_btn:
     model_path = "smartphone_model.pkl"
@@ -217,15 +279,45 @@ if predict_btn:
             </div>
             """, unsafe_allow_html=True)
             
+            # Market Position Analysis & Tier Badge
+            market_ratio = min(max((predicted_raw - 8000.0) / 212000.0, 0.0), 1.0)
+            
+            # Determine Tier Label, Icon, and Color
+            if predicted_price < 25000:
+                tier_label = "🟢 Budget Range (Excellent Value)"
+                tier_desc = "Perfect for standard daily tasks, light media, and high battery efficiency."
+            elif predicted_price < 60000:
+                tier_label = "🟡 Mid-Range Performance"
+                tier_desc = "Optimal balance of computational power, storage, and modern camera sensors."
+            elif predicted_price < 100000:
+                tier_label = "🟠 High-End Premium"
+                tier_desc = "Exceptional performance, multi-tasking capabilities, and flagship-level main camera."
+            else:
+                tier_label = "🔴 Ultra-Flagship / Luxury Tier"
+                tier_desc = "Ultimate raw specs, designed for extreme workflows, professional photography, and gaming."
+                
+            # Render Market Tier Description Box
+            st.markdown(f"""
+            <div style="margin-top: 25px; padding: 20px; border-radius: 12px; background: rgba(128, 128, 128, 0.05); border: 1px solid rgba(128, 128, 128, 0.1);">
+                <div style="font-weight: 600; color: var(--text-color); font-size: 1rem;">Market Tier Evaluation:</div>
+                <div style="font-weight: 800; color: var(--text-color); font-size: 1.1rem; margin-top: 5px;">{tier_label}</div>
+                <div style="color: var(--text-color); opacity: 0.75; font-size: 0.88rem; margin-top: 6px; line-spacing: 1.3;">{tier_desc}</div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Render Progress Bar
+            st.markdown('<div style="text-align: center; color: var(--text-color); margin-top: 25px; font-weight: 600; font-size: 0.85rem; opacity: 0.85;">Market Price Spectrum (₹8,000 - ₹220,000)</div>', unsafe_allow_html=True)
+            st.progress(market_ratio)
+            
             # Also invoke fallback success banner for clarity & guide adherence
             st.success(f"Successfully calculated smartphone price: {formatted_price}")
             
         except Exception as e:
             st.error(f"Inference error: {str(e)}")
 
-# Footer
+# Footer (General Non-Academic text)
 st.markdown("""
-<div style="text-align: center; margin-top: 50px; color: var(--text-color); opacity: 0.5; font-size: 0.85rem;">
-    PhoneMatrix • End-Semester Machine Learning Evaluation Project
+<div style="text-align: center; margin-top: 60px; color: var(--text-color); opacity: 0.45; font-size: 0.85rem;">
+    PhoneMatrix © 2026 • Intelligent Smartphone Valuation Engine • Powered by Random Forest Regression
 </div>
 """, unsafe_allow_html=True)
